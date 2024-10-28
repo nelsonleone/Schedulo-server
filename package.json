@@ -1,0 +1,34 @@
+{
+  "name": "schedulo-server",
+  "version": "1.0.0",
+  "description": "A sleek, intuitive task management app to boost productivity and keep you on track.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node dist/app.js",
+    "dev": "nodemon src/app.ts",
+    "build": "tsc"
+  },
+  "keywords": [
+    "task-manager",
+    "todo",
+    "productivity"
+  ],
+  "author": "Nelson Onuegbu",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-async-handler": "^1.2.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.8.1",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}

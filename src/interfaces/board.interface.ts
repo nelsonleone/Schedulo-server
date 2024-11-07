@@ -10,6 +10,11 @@ export const BoardSchema = z.object({
   updated_at: z.string().optional(),
 })
 
+export const NewBoardSchema = z.object({
+  name: z.string(),
+  columns: z.array(z.string()),
+})
+
 export type Board = z.infer<typeof BoardSchema>
 
 export const BoardColumnSchema = z.object({

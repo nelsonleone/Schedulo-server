@@ -1,41 +1,60 @@
 import { NextFunction, Request, Response } from 'express';
-import { supabaseClient } from '../lib/supabaseClient';
 import { BoardSchema } from '../interfaces/board.interface';
 import { HttpError } from '../utils/errors/httpError';
 import asyncHandler from "express-async-handler"
-import { Task } from '../interfaces/task.interface';
+import { Subtask, Task } from '../interfaces/task.interface';
+import { createServerDbClient } from '../lib/supabaseClient';
 
 
 
-export const addTaskToBoard = async (req: Request, res: Response) => {
+export const addTaskToBoard = async (req: any, res: Response) => {
     const { boardID } = req.body;
-    const { userID } = req.params;
+    const { user_id } = req.params;
 
     try {
-        const taskData: Task = req.body;
+        const reqData : Task = req.body;
 
-        const { data: task, error } = await supabaseClient
-            .from("tasks")
-            .insert({ ...taskData, boardID, userID })
-            .eq("board_id",boardID)
+        const { subtasks, ...rest } = reqData;
 
-        if (error) {
-            return res.status(500).json({ error: error.message })
-        }
+        const supabaseClient = await createServerDbClient(req.authToken)
 
-        res.status(201).json(task);
+        const { data: taskData, error: taskError } = await supabaseClient
+        .from('tasks')
+        .insert([{ user_id, board_id: boardID, ...rest }])
+        .select('id')
+        .single()
+
+      if (taskError) throw taskError;
+
+      const task_id = taskData?.id;
+
+      const subtasksData = subtasks?.map((subtask: Subtask) => ({
+        task_id,
+        is_completed: subtask.is_completed,
+        title: subtask.title,
+      }))
+
+      const { error: columnsError } = await supabaseClient
+        .from('sub_tasks')
+        .insert(subtasksData)
+
+      if (columnsError) throw columnsError;
+
+        res.status(201).json(taskData)
     } catch (err: any | unknown) {
         return res.status(400).json({ errors: err.errors })
     }
 }
 
 
-export const updateTask = async (req: Request, res: Response, next: NextFunction) => {
+export const updateTask = async (req: any, res: Response, next: NextFunction) => {
     const { taskID, boardID } = req.body;
     const { user_id } = req.params; 
 
     try {
         const taskData: Partial<Task> = req.body;
+
+        const supabaseClient = await createServerDbClient(req.authToken)
 
         const { data: updatedTask, error } = await supabaseClient
             .from("tasks")

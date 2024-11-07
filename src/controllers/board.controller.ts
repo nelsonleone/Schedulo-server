@@ -7,10 +7,10 @@ import expressAsyncHandler from 'express-async-handler';
 export const getUserBoards = expressAsyncHandler(
   async (req: any, res: Response): Promise<void> => {
     const { user_id } = req.params;
-
+    
     const supabaseClient = await createServerDbClient(req.authToken)
 
-    const { data: boards, error } = await supabaseClient
+    const { data: boardsData, error } = await supabaseClient
     .from('boards')
     .select(`
       *,
@@ -24,12 +24,14 @@ export const getUserBoards = expressAsyncHandler(
     `)
     .eq('user_id', user_id)
 
+
     
     if (error) {
       throw new HttpError(400, 'Failed to fetch boards', error)
     }
 
-    res.status(200).json(boards)
+    console.log(boardsData)
+    res.status(200).json(boardsData)
   }
 )
 
@@ -37,20 +39,40 @@ export const getUserBoards = expressAsyncHandler(
 
 
 export const createBoard = expressAsyncHandler(
-  async (req: any, res: Response, next: NextFunction) : Promise<void> => {
-    const { user_id, name, columns } = req.body;
+  async (req: any, res: Response, next: NextFunction): Promise<void> => {
+    const { name, columns } = req.body;
+    const { user_id } = req.params;
 
-    const supabaseClient = await createServerDbClient(req.authToken)
+    const supabaseClient = await createServerDbClient(req.authToken);
 
-    const { data, error } = await supabaseClient
-      .from('boards')
-    .insert([{ user_id: user_id, name, columns }])
-  
-    if (error) {
-      throw new HttpError(400, 'Failed to create board', error)
+    try {
+      const { data: boardData, error: boardError } = await supabaseClient
+        .from('boards')
+        .insert([{ user_id, name }])
+        .select('id')
+        .single()
+
+      if (boardError) throw boardError;
+
+      const boardId = boardData?.id;
+
+      const columnsData = columns.map((column: string, index: number) => ({
+        board_id: boardId,
+        name: column,
+        position: index,
+      }))
+
+      const { error: columnsError } = await supabaseClient
+        .from('board_columns')
+        .insert(columnsData)
+
+      if (columnsError) throw columnsError;
+
+      res.status(201).json({ board: boardData, columns: columnsData })
+    } catch (error) {
+      console.log(error)
+      next(error)
     }
-  
-    res.status(201).json(data)
   }
 )
 

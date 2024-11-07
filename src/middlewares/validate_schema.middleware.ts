@@ -10,7 +10,7 @@ export const validateSchema : any = (schema: Schema) => {
             next()
         } catch (err) {
             if (err instanceof ZodError) {
-                return res.status(400).json({ errors: err.errors });
+                return res.status(400).json({ errors: err.errors })
             }
             next(err)
         }

@@ -29,8 +29,6 @@ export const getUserBoards = expressAsyncHandler(
     if (error) {
       throw new HttpError(400, 'Failed to fetch boards', error)
     }
-
-    console.log(boardsData)
     res.status(200).json(boardsData)
   }
 )

@@ -1,50 +1,52 @@
 import { NextFunction, Request, Response } from 'express';
-import { BoardSchema } from '../interfaces/board.interface';
-import { HttpError } from '../utils/errors/httpError';
-import asyncHandler from "express-async-handler"
-import { Subtask, Task } from '../interfaces/task.interface';
+import { NewTask, Subtask, Task } from '../interfaces/task.interface';
 import { createServerDbClient } from '../lib/supabaseClient';
+import expressAsyncHandler from 'express-async-handler';
 
 
 
-export const addTaskToBoard = async (req: any, res: Response) => {
-    const { boardID } = req.body;
-    const { user_id } = req.params;
+export const addTaskToBoard = expressAsyncHandler(
+    async (req: any, res: Response) : Promise<any> => {
+        const { board_id } = req.body;
 
-    try {
-        const reqData : Task = req.body;
+        try {
+            const reqData : NewTask = req.body;
+    
+            const { subtasks, ...rest } = reqData;
 
-        const { subtasks, ...rest } = reqData;
-
-        const supabaseClient = await createServerDbClient(req.authToken)
-
-        const { data: taskData, error: taskError } = await supabaseClient
-        .from('tasks')
-        .insert([{ user_id, board_id: boardID, ...rest }])
-        .select('id')
-        .single()
-
-      if (taskError) throw taskError;
-
-      const task_id = taskData?.id;
-
-      const subtasksData = subtasks?.map((subtask: Subtask) => ({
-        task_id,
-        is_completed: subtask.is_completed,
-        title: subtask.title,
-      }))
-
-      const { error: columnsError } = await supabaseClient
-        .from('sub_tasks')
-        .insert(subtasksData)
-
-      if (columnsError) throw columnsError;
-
-        res.status(201).json(taskData)
-    } catch (err: any | unknown) {
-        return res.status(400).json({ errors: err.errors })
+            console.log(reqData)
+    
+            const supabaseClient = await createServerDbClient(req.authToken)
+    
+            const { data: taskData, error: taskError } = await supabaseClient
+            .from('tasks')
+            .insert([{ board_id, is_completed: false, ...rest }])
+            .select('id')
+            .single()
+    
+          if (taskError) throw taskError;
+    
+          const task_id = taskData?.id;
+    
+          const subtasksData = subtasks?.map((subtask) => ({
+            task_id,
+            is_completed: false,
+            title: subtask,
+          }))
+    
+          const { error: columnsError } = await supabaseClient
+            .from('sub_tasks')
+            .insert(subtasksData)  
+    
+          if (columnsError) throw columnsError;
+    
+            res.status(201).json(taskData)
+        } catch (err: any | unknown) {
+            console.log(err)
+            return res.status(400).json({ errors: err.errors })
+        }
     }
-}
+)
 
 
 export const updateTask = async (req: any, res: Response, next: NextFunction) => {

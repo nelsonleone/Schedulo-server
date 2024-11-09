@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { NewTask, Subtask, Task } from '../interfaces/task.interface';
+import { EditTask, NewTask, Subtask, Task } from '../interfaces/task.interface';
 import { createServerDbClient } from '../lib/supabaseClient';
 import expressAsyncHandler from 'express-async-handler';
 
@@ -49,28 +49,51 @@ export const addTaskToBoard = expressAsyncHandler(
 )
 
 
-export const updateTask = async (req: any, res: Response, next: NextFunction) => {
-    const { taskID, boardID } = req.body;
-    const { user_id } = req.params; 
+export const updateTask = expressAsyncHandler(
+    async (req: any, res: Response): Promise<any> => {
+        const { board_id, is_completed, position, subtasks } = req.body;
+        const { task_id } = req.params;
 
-    try {
-        const taskData: Partial<Task> = req.body;
+        console.log(req.body)
 
-        const supabaseClient = await createServerDbClient(req.authToken)
+        try {
+            const supabaseClient = await createServerDbClient(req.authToken)
 
-        const { data: updatedTask, error } = await supabaseClient
-            .from("tasks")
-            .update(taskData)
-            .eq("id", taskID)
-            .eq("board_id", boardID)
-            .eq("userId", user_id)
+            // Update task
+            const { data: taskUpdateData, error: taskError } = await supabaseClient
+                .from("tasks")
+                .update({ board_id, is_completed, position })
+                .eq("id", task_id)
+                .select()
 
-        if (error) {
-            return res.status(404).json({ error: "Task not found or you don't have permission." })
+            if (taskError) {
+                console.error("Task update error:", taskError)
+                throw taskError;
+            }
+
+
+            if (subtasks) {
+                for (const subtask of subtasks) {
+                    const { id, is_completed } = subtask;
+
+                    const { data: subtaskUpdateData, error: subtaskError } = await supabaseClient
+                        .from("sub_tasks")
+                        .update({ is_completed })
+                        .eq("id", id)
+                        .eq("task_id", task_id)
+                        .select()
+
+                    if (subtaskError) {
+                        console.error(`Error updating subtask ID ${id}:`, subtaskError)
+                        throw subtaskError;
+                    }
+                }
+            }
+
+            res.status(200).json({ message: "Task and subtasks updated successfully" })
+        } catch (err: any) {
+            console.error("Error in updateTask:", err)
+            res.status(400).json({ error: "Failed to update task or subtasks" })
         }
-
-        res.json(updatedTask)
-    } catch (err: any | unknown) {
-        next(err)
     }
-}
+)

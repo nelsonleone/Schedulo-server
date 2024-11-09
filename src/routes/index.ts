@@ -3,8 +3,8 @@ import { createBoard, getUserBoards, updateBoard } from '../controllers/board.co
 import { validateSchema } from '../middlewares/validate_schema.middleware';
 import { NewBoardSchema } from '../interfaces/board.interface';
 import { check_role } from '../middlewares/check_role.middleware';
-import { NewTaskSchema } from '../interfaces/task.interface';
-import { addTaskToBoard } from '../controllers/task.controller';
+import { EditTaskSchema, NewTaskSchema } from '../interfaces/task.interface';
+import { addTaskToBoard, updateTask } from '../controllers/task.controller';
 
 const router = Router()
 
@@ -16,6 +16,7 @@ router.post("/tasks/create/:user_id", check_role, validateSchema(NewTaskSchema),
 
 router.patch("/")
 router.patch("/boards/update/:user_id",updateBoard)
+router.patch("/tasks/update/:task_id", check_role, validateSchema(EditTaskSchema), updateTask)
 
 
 export default router;

@@ -29,5 +29,12 @@ export const NewTaskSchema = z.object({
     subtasks: z.array(z.string()).optional(),
 })
 
+export const EditTaskSchema = z.object({
+    position: z.number(),
+    is_completed: z.boolean(),
+    subtasks: z.array(z.object({ is_completed: z.boolean(), id: z.string() })).optional(),
+})
+
 export type Task = z.infer<typeof TaskSchema>;
+export type EditTask = z.infer<typeof EditTaskSchema>;
 export type NewTask = z.infer<typeof NewTaskSchema>;

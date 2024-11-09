@@ -15,6 +15,12 @@ export const NewBoardSchema = z.object({
   columns: z.array(z.string()),
 })
 
+
+export const EditBoardSchema = z.object({
+  name: z.string(),
+  columns: z.array(z.object({ name: z.string(), position: z.number(), id: z.string()})),
+})
+
 export type Board = z.infer<typeof BoardSchema>
 
 export const BoardColumnSchema = z.object({

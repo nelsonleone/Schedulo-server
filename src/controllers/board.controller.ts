@@ -82,7 +82,7 @@ export const createBoard = expressAsyncHandler(
 
 export const updateBoard = expressAsyncHandler(
   async (req: any, res: Response, next: NextFunction): Promise<void> => {
-    const { board_id, columns } = req.body;
+    const { board_id, columns, name } = req.body;
     const { user_id } = req.params;
   
     try {
@@ -90,16 +90,19 @@ export const updateBoard = expressAsyncHandler(
       const supabaseClient = await createServerDbClient(req.authToken)
 
       const { data: boardData, error: boardError } = await supabaseClient
-        .from('boards')
-        .insert([{ user_id, name }])
-        .select('id')
-        .single()
+      .from('boards')
+      .update({ name })
+      .eq('id', board_id)
+      .eq('user_id', user_id)
+      .select('id')
+      .single()
 
       if (boardError) throw boardError;
   
-      const existingColumns = columns.filter((column: Board_Column) => column.id)
-      const newColumns = columns.filter((column: Board_Column) => !column.id)
-  
+      const existingColumns = columns.filter((column: Board_Column) => column.id.trim())
+      const newColumns = columns.filter((column: Board_Column) => !column.id.trim())
+
+
       // Update existing columns
       for (const column of existingColumns) {
           const { id, name } = column;

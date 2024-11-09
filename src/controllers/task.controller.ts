@@ -117,7 +117,6 @@ export const deleteTask = expressAsyncHandler(
 
             res.status(200).json({ message: "Task deleted successfully" })
         } catch (err: any) {
-            console.error("Error in deleteTask:", err)
             res.status(400).json({ error: "Failed to delete" })
         }
     }

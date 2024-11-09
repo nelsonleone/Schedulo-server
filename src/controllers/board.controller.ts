@@ -145,10 +145,13 @@ export const deleteBoard = expressAsyncHandler(
   async (req: any, res: Response) : Promise<any> => {
     
     const { user_id } = req.params;
-    const { board_id } = req.body;
+    const { board_id } = req.query;
 
-    if (user_id){
+    if (!user_id){
       return res.status(400).json({ error: "No user Id was provided" })
+    }
+    if (!board_id){
+      return res.status(400).json({ error: "No board Id was provided in query" })
     }
 
     const supabaseClient = await createServerDbClient(req.authToken)
@@ -157,12 +160,13 @@ export const deleteBoard = expressAsyncHandler(
       .from("boards")
       .delete()
       .eq("id", board_id)
-      .eq("userId", user_id ) 
+      .eq("user_id", user_id ) 
 
     if (error) {
+      console.log(error)
       return res.status(404).json({ error: "Board not found or you don't have permission." })
     }
 
-    res.status(204).send()
+    res.status(201).send()
   }
 )

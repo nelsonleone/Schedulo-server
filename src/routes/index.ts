@@ -1,5 +1,5 @@
 import { NextFunction, Router } from 'express';
-import { createBoard, getUserBoards, updateBoard } from '../controllers/board.controller';
+import { createBoard, deleteBoard, getUserBoards, updateBoard } from '../controllers/board.controller';
 import { validateSchema } from '../middlewares/validate_schema.middleware';
 import { EditBoardSchema, NewBoardSchema } from '../interfaces/board.interface';
 import { check_role } from '../middlewares/check_role.middleware';
@@ -19,6 +19,7 @@ router.patch("/tasks/update/:task_id", check_role, validateSchema(EditTaskSchema
 
 
 router.delete("/tasks/delete/:task_id", check_role, deleteTask)
+router.delete("/boards/delete/:user_id", check_role, deleteBoard)
 
 
 export default router;

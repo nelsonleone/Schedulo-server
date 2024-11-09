@@ -54,12 +54,9 @@ export const updateTask = expressAsyncHandler(
         const { board_id, is_completed, position, subtasks } = req.body;
         const { task_id } = req.params;
 
-        console.log(req.body)
-
         try {
             const supabaseClient = await createServerDbClient(req.authToken)
 
-            // Update task
             const { data: taskUpdateData, error: taskError } = await supabaseClient
                 .from("tasks")
                 .update({ board_id, is_completed, position })
@@ -94,6 +91,34 @@ export const updateTask = expressAsyncHandler(
         } catch (err: any) {
             console.error("Error in updateTask:", err)
             res.status(400).json({ error: "Failed to update task or subtasks" })
+        }
+    }
+)
+
+
+
+export const deleteTask = expressAsyncHandler(
+    async (req: any, res: Response): Promise<any> => {
+        const { task_id } = req.params;
+
+        try {
+            const supabaseClient = await createServerDbClient(req.authToken)
+
+            const {  error: taskError } = await supabaseClient
+                .from("tasks")
+                .delete()
+                .eq("id", task_id)
+                .select()
+
+            if (taskError) {
+                console.error("Task update error:", taskError)
+                throw taskError;
+            }
+
+            res.status(200).json({ message: "Task deleted successfully" })
+        } catch (err: any) {
+            console.error("Error in deleteTask:", err)
+            res.status(400).json({ error: "Failed to delete" })
         }
     }
 )

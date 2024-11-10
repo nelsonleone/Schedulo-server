@@ -86,33 +86,33 @@ export const updateBoard = expressAsyncHandler(
     const { user_id } = req.params;
   
     try {
+      const supabaseClient = await createServerDbClient(req.authToken);
 
-      const supabaseClient = await createServerDbClient(req.authToken)
-
+      // Update the board name
       const { data: boardData, error: boardError } = await supabaseClient
-      .from('boards')
-      .update({ name })
-      .eq('id', board_id)
-      .eq('user_id', user_id)
-      .select('id')
-      .single()
+        .from('boards')
+        .update({ name })
+        .eq('id', board_id)
+        .eq('user_id', user_id)
+        .select('id')
+        .single();
 
       if (boardError) throw boardError;
-  
-      const existingColumns = columns.filter((column: Board_Column) => column.id.trim())
-      const newColumns = columns.filter((column: Board_Column) => !column.id.trim())
 
+      // Filter columns
+      const existingColumns = columns.filter((column: Board_Column) => column.id.trim());
+      const newColumns = columns.filter((column: Board_Column) => !column.id.trim());
 
       // Update existing columns
       for (const column of existingColumns) {
-          const { id, name } = column;
-          const { error: updateError } = await supabaseClient
-              .from('board_columns')
-              .update({ name })
-              .eq('id', id)
-              .eq('board_id', board_id)
-  
-          if (updateError) throw updateError;
+        const { id, name } = column;
+        const { error: updateError } = await supabaseClient
+          .from('board_columns')
+          .update({ name })
+          .eq('id', id)
+          .eq('board_id', board_id)
+
+        if (updateError) throw updateError;
       }
   
       // Insert new columns
@@ -131,26 +131,23 @@ export const updateBoard = expressAsyncHandler(
       }
 
 
-      const existingColumnIds = existingColumns.map((column: Board_Column) => column.id)
-
-      console.log(existingColumnIds)
-
+      // Delete columns that are not in the existingColumns array
+      const existingColumnIds = existingColumns.map((column: Board_Column) => column.id);
       const { error: deleteError } = await supabaseClient
         .from('board_columns')
         .delete()
         .eq('board_id', board_id)
-        .not('id', 'in', `(${existingColumnIds.join(",")})`)
+        .not('id', 'in', `(${existingColumnIds.join(",")})`);
 
       if (deleteError) throw deleteError;
-  
-      res.status(200).json({ message: "Board columns updated successfully" })
-    }
-    catch (err) {
-      console.error("Error updating board columns:", err)
-      res.status(500).json({ error: "Failed to update board columns" })
+
+      res.status(200).json({ message: "Board columns updated successfully" });
+    } catch (err) {
+      console.error("Error updating board columns:", err);
+      res.status(500).json({ error: "Failed to update board columns" });
     }
   }
-)
+);
 
 
 

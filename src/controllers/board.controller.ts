@@ -139,7 +139,7 @@ export const updateBoard = expressAsyncHandler(
         .from('board_columns')
         .delete()
         .eq('board_id', board_id)
-        .not('id', 'in', `(${existingColumnIds.map((id: string) => `${id}`).join(", ")})`)
+        .not('id', 'in', `(${existingColumnIds.join(",")})`)
 
       if (deleteError) throw deleteError;
   

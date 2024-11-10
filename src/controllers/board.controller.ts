@@ -129,6 +129,19 @@ export const updateBoard = expressAsyncHandler(
   
         if (insertError) throw insertError;
       }
+
+
+      const existingColumnIds = existingColumns.map((column: Board_Column) => column.id)
+
+      console.log(existingColumnIds)
+
+      const { error: deleteError } = await supabaseClient
+        .from('board_columns')
+        .delete()
+        .eq('board_id', board_id)
+        .not('id', 'in', `(${existingColumnIds.map((id: string) => `${id}`).join(", ")})`)
+
+      if (deleteError) throw deleteError;
   
       res.status(200).json({ message: "Board columns updated successfully" })
     }

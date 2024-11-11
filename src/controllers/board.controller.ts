@@ -100,8 +100,9 @@ export const updateBoard = expressAsyncHandler(
       if (boardError) throw boardError;
 
       // Filter columns
-      const existingColumns = columns.filter((column: Board_Column) => column.id.trim());
-      const newColumns = columns.filter((column: Board_Column) => !column.id.trim());
+      const existingColumns = columns.filter((column: Board_Column) => column.id.trim())
+      const newColumns = columns.filter((column: Board_Column) => !column.id.trim())
+      const existingColumnIds = existingColumns.map((column: Board_Column) => column.id)
 
       // Update existing columns
       for (const column of existingColumns) {
@@ -114,40 +115,48 @@ export const updateBoard = expressAsyncHandler(
 
         if (updateError) throw updateError;
       }
-  
-      // Insert new columns
+
       if (newColumns.length > 0) {
         const columnsToInsert = newColumns.map((column: Board_Column) => ({
           name: column.name,
           position: column.position,
           board_id,
         }))
-  
-        const { error: insertError } = await supabaseClient
+    
+        const { data: insertData, error: insertError } = await supabaseClient
           .from('board_columns')
           .insert(columnsToInsert)
-  
-        if (insertError) throw insertError;
+          .select('id') 
+    
+        if (insertError) {
+          throw insertError;
+        } else {
+          if (insertData.length){
+            const newInsertedIds = insertData.map((column: { id: string }) => column.id)
+            existingColumnIds.push(...newInsertedIds)
+          }
+        }
       }
 
-
-      // Delete columns that are not in the existingColumns array
-      const existingColumnIds = existingColumns.map((column: Board_Column) => column.id);
+      console.log(existingColumnIds)
+      
+    
+      // Delete columns that are not in the combined `existingColumnIds`
       const { error: deleteError } = await supabaseClient
         .from('board_columns')
         .delete()
         .eq('board_id', board_id)
-        .not('id', 'in', `(${existingColumnIds.join(",")})`);
-
+        .not('id', 'in', `(${existingColumnIds.join(",")})`)
+      
       if (deleteError) throw deleteError;
 
-      res.status(200).json({ message: "Board columns updated successfully" });
+      res.status(200).json({ message: "Board updated successfully" })
     } catch (err) {
-      console.error("Error updating board columns:", err);
-      res.status(500).json({ error: "Failed to update board columns" });
+      console.error("Error updating board:", err)
+      res.status(500).json({ error: "Failed to update board" })
     }
   }
-);
+)
 
 
 
